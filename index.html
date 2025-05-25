@@ -2,62 +2,200 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Kuran Bilgi Yarışması</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kur'an Bilgi Yarışması</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       background-color: #f2f2f2;
       color: #333;
-      padding: 40px;
+      padding: 20px;
       text-align: center;
     }
+    h1 {
+      font-size: 1.8em;
+    }
     .question {
-      font-size: 24px;
-      margin-bottom: 20px;
+      font-size: 1.2em;
+      margin-bottom: 15px;
     }
     .choice {
       display: block;
       margin: 10px auto;
-      padding: 10px 20px;
+      padding: 12px;
       background-color: #fff;
       border: 2px solid #4CAF50;
-      width: 300px;
+      width: 90%;
+      max-width: 300px;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 1em;
+      border-radius: 8px;
       transition: 0.3s;
     }
     .choice:hover {
       background-color: #4CAF50;
       color: white;
     }
-    #result {
-      font-size: 20px;
+    #result, #score, #timer, #highScore, #questionCounter {
+      font-size: 1em;
+      margin-top: 10px;
+    }
+    #restartBtn {
+      display: none;
       margin-top: 20px;
-      font-weight: bold;
+      padding: 12px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      font-size: 1em;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    @media (max-width: 480px) {
+      .choice {
+        font-size: 0.9em;
+        padding: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>📖 Kuran Bilgi Yarışması</h1>
-  <div class="question">📌 Kuran-ı Kerim kaç sureden oluşur?</div>
-  <div class="choice" onclick="checkAnswer(this)">114</div>
-  <div class="choice" onclick="checkAnswer(this)">124</div>
-  <div class="choice" onclick="checkAnswer(this)">99</div>
-  <div class="choice" onclick="checkAnswer(this)">100</div>
+  <h1>📖 Kur'an Bilgi Yarışması</h1>
+  <div id="score">Puan: 0</div>
+  <div id="highScore">🔝 En Yüksek Puan: 0</div>
+  <div id="questionCounter"></div>
+  <div id="timer">Süre: 15</div>
+  <div class="question"></div>
+  <div id="choices"></div>
   <p id="result"></p>
+  <button id="restartBtn" onclick="restartGame()">🔁 Tekrar Oyna</button>
+
+  <audio id="correctSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_c52c6c7f4e.mp3"></audio>
+  <audio id="wrongSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_7f7fbcf40a.mp3"></audio>
 
   <script>
+    const questions = [
+      { question: "Kur'an-ı Kerim Kaç Sûreden Oluşur?", correct: "114", choices: ["114", "120", "99", "110"] },
+      { question: "Kur'an-ı Kerim Kaç Ayetten Oluşur?", correct: "6236", choices: ["6236", "6000", "6666", "6200"] },
+      { question: "'Gün' Kelimesi Kur'an'da Kaç Kere Geçer?", correct: "365", choices: ["365", "360", "366", "355"] },
+      { question: "İsmi En Çok Geçen Peygamber Kimdir?", correct: "Hz. Musa", choices: ["Hz. Musa", "Hz. Muhammed", "Hz. İbrahim", "Hz. Nuh"] },
+      { question: "Kur'an'daki En Uzun Sûre Hangisidir?", correct: "Bakara Sûresi", choices: ["Bakara Sûresi", "Nisa Sûresi", "Ali İmran Sûresi", "En'am Sûresi"] },
+      { question: "Besmele ile Başlamayan Sûre?", correct: "Tevbe Sûresi", choices: ["Tevbe Sûresi", "Fatiha Sûresi", "Yasin Sûresi", "Kevser Sûresi"] },
+      { question: "Kur'an Kaç Yılda İnmiştir?", correct: "22 Yıl 2 Ay 22 Gün", choices: ["22 Yıl 2 Ay 22 Gün", "23 Yıl", "20 Yıl", "21 Yıl 6 Ay"] },
+      { question: "Tevhid Sûresi Olarak Bilinen Sûre?", correct: "İhlas Sûresi", choices: ["İhlas Sûresi", "Nas Sûresi", "Felak Sûresi", "Fatiha Sûresi"] },
+      { question: "En Çok Ayet İnen Kavim?", correct: "İsrailoğulları", choices: ["İsrailoğulları", "Kureyş", "Medyen", "Ad Kavmi"] },
+      { question: "Besmele Kur'an'da Kaç Kez Geçer?", correct: "114", choices: ["114", "113", "100", "115"] }
+    ];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    shuffle(questions);
+    questions.forEach(q => shuffle(q.choices));
+
+    let currentQuestion = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 15;
+    let highScore = localStorage.getItem("kuranHighScore") || 0;
+
+    document.getElementById("highScore").innerText = `🔝 En Yüksek Puan: ${highScore}`;
+
+    function loadQuestion() {
+      if (currentQuestion >= questions.length) return endGame();
+
+      document.getElementById("questionCounter").innerText = `Soru ${currentQuestion + 1} / ${questions.length}`;
+      const q = questions[currentQuestion];
+      document.querySelector(".question").innerText = q.question;
+
+      const choicesContainer = document.getElementById("choices");
+      choicesContainer.innerHTML = "";
+
+      q.choices.forEach(choice => {
+        const btn = document.createElement("div");
+        btn.className = "choice";
+        btn.innerText = choice;
+        btn.onclick = () => checkAnswer(btn);
+        choicesContainer.appendChild(btn);
+      });
+
+      document.getElementById("result").innerText = "";
+      startTimer();
+    }
+
     function checkAnswer(choice) {
-      const correct = "114";
+      clearInterval(timer);
+      const correct = questions[currentQuestion].correct;
       const result = document.getElementById("result");
+
       if (choice.innerText === correct) {
         result.innerText = "✅ Doğru cevap!";
         result.style.color = "green";
+        document.getElementById("correctSound").play();
+        score += 10;
       } else {
         result.innerText = "❌ Yanlış cevap!";
         result.style.color = "red";
+        document.getElementById("wrongSound").play();
+      }
+
+      document.getElementById("score").innerText = `Puan: ${score}`;
+
+      setTimeout(() => {
+        currentQuestion++;
+        loadQuestion();
+      }, 1500);
+    }
+
+    function startTimer() {
+      timeLeft = 15;
+      document.getElementById("timer").innerText = `Süre: ${timeLeft}`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerText = `Süre: ${timeLeft}`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          document.getElementById("result").innerText = "⏱ Süre doldu!";
+          document.getElementById("result").style.color = "orange";
+          setTimeout(() => {
+            currentQuestion++;
+            loadQuestion();
+          }, 1000);
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      document.querySelector(".question").innerText = `🎉 Yarışma Bitti! Toplam Puanın: ${score}`;
+      document.getElementById("choices").innerHTML = "";
+      document.getElementById("timer").style.display = "none";
+      document.getElementById("questionCounter").style.display = "none";
+      document.getElementById("result").innerText = "";
+      document.getElementById("restartBtn").style.display = "inline-block";
+
+      if (score > highScore) {
+        localStorage.setItem("kuranHighScore", score);
+        document.getElementById("highScore").innerText = `🔝 En Yüksek Puan: ${score}`;
       }
     }
+
+    function restartGame() {
+      currentQuestion = 0;
+      score = 0;
+      document.getElementById("score").innerText = `Puan: ${score}`;
+      document.getElementById("timer").style.display = "block";
+      document.getElementById("questionCounter").style.display = "block";
+      document.getElementById("restartBtn").style.display = "none";
+      shuffle(questions);
+      questions.forEach(q => shuffle(q.choices));
+      loadQuestion();
+    }
+
+    window.onload = loadQuestion;
   </script>
 </body>
 </html>
