@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kuran-ı Kerim Bilgi Yarışması</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      text-align: center;
+      padding: 50px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📖 Kuran-ı Kerim Bilgi Yarışması</h1>
+  <p>Hazırsan "Yarışmaya Başla" butonuna tıkla ve bilginizi test et!</p>
+  <button onclick="startQuiz()">Yarışmaya Başla</button>
+
+  <script>
+    function startQuiz() {
+      let puan = 0;
+
+      const soru1 = prompt("1. Kuran-ı Kerim'de kaç ayet vardır?");
+      if (soru1 === "6236") puan++;
+
+      const soru2 = prompt("2. Kuran-ı Kerim'i çoğaltan sahabe kimdir?");
+      if (["hz osman", "hz.osman", "osman"].includes(soru2.toLowerCase().trim())) puan++;
+
+      const soru3 = prompt("3. Kuran-ı Kerim kaç yılda inmiş, tamamlanmıştır?");
+      const s3 = soru3.toLowerCase();
+      if (s3.includes("22") && s3.includes("2 ay") && s3.includes("22 gün")) puan++;
+
+      const soru4 = prompt("4. Kur’an’ın sayfalarının toplandığı cilde verilen özel isim nedir?");
+      if (soru4.toLowerCase().trim() === "mushaf") puan++;
+
+      const soru5 = prompt("5. Kuran-ı Kerim'de adı en çok geçen peygamber kimdir?");
+      if (["hz musa", "hz.musa", "musa"].includes(soru5.toLowerCase().trim())) puan++;
+
+      const soru6 = prompt("6. Kur’an’da hakkında en çok ayet inen kavim hangisidir?");
+      if (["israil oğulları", "israiloğulları", "benu israil"].includes(soru6.toLowerCase().trim())) puan++;
+
+      alert("✅ Yarışma Bitti!\nToplam Puanın: " + puan + " / 6");
+
+      if (puan === 6) {
+        alert("🎉 Mükemmel! Hepsini bildin kral!");
+      } else if (puan >= 4) {
+        alert("👍 Gayet iyi! Biraz daha çalışırsan full gelirsin.");
+      } else {
+        alert("😅 Daha çok pratik yapman lazım. Devam et!");
+      }
+    }
+  </script>
+
+</body>
+</html>
